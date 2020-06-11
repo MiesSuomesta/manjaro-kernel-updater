@@ -1,5 +1,21 @@
 #!/bin/sh
 
+manjarorepo() {
+  from="$1"
+  to="$2"
+  MAINLINEKERNELPATH="$PWD"
+	(
+		cd $to;
+		cp ../patches/$to/* .
+		cp -v ../misc/* .
+		sed -i "s,MAINLINEKERNELPATH,${MAINLINEKERNELPATH},g" PKG*
+		
+		updgitsources
+		exit $?
+	)
+        return $?
+}
+
 initgitrepos()
 {
   from="$1"
@@ -7,20 +23,12 @@ initgitrepos()
   MAINLINEKERNELPATH="$PWD"
 		
   if [ -d $to ]; then
-	(
-		
-		cd $to;
-		cp -v ../misc/* .
-
-		sed -i "s,MAINLINEKERNELPATH,${MAINLINEKERNELPATH},g" PKG*
-
-		updgitsources
-		exit $?
-	)
-        return $?
+     manjarorepo "$1" "$2"
+     return $?
   else
-	git clone $from $to
-        return $?
+     git clone $from $to
+     manjarorepo "$1" "$2"
+     return $?
   fi
 }
 
@@ -45,11 +53,11 @@ err=$?
     echo "Updated linux56 kernel sources."
     exit $err
 )
-err=$?
+err=$(($err + $?))
 
 (
     echo "Updating mainline kernel sources...."
-    initgitrepos https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git mainline-kernel-org
+    initgitrepos https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git mainline
     err=$?
     echo "Updated mainline kernel sources."
     exit $err

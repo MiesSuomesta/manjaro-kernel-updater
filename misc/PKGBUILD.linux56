@@ -69,7 +69,8 @@ source=("https://www.kernel.org/pub/linux/kernel/v5.x/linux-${_basekernel}.tar.x
         '0011-bootsplash.patch'
         '0012-bootsplash.patch'
         '0013-bootsplash.patch'
-	'net-ethernet-realtek-r8168-r8169-driver-fix.patch')
+	'net-ethernet-realtek-r8168-r8169-driver-fix.patch'
+        'dm-patch.patch')
 sha256sums=('e342b04a2aa63808ea0ef1baab28fc520bd031ef8cf93d9ee4a31d4058fcb622'
             '08026b9401edd0fb5a8d2f30574ca443ab4b52e0e426a46448b01714c8cc3849'
             '9ac562348f78da875874f42569cdbb9b1143adf323cbe3b2e9d48df01efd7d59'
@@ -228,6 +229,9 @@ prepare() {
   msg "applying r816x fix"
   msg2 "net-ethernet-realtek-r8168-r8169-driver-fix.patch"
   patch -Np1 -i "${srcdir}/net-ethernet-realtek-r8168-r8169-driver-fix.patch"
+
+  msg "Quickfixes: dm-patch.patch"
+  patch -Np1 -i "${srcdir}/dm-patch.patch"
 
   if [ "${CARCH}" = "x86_64" ]; then
     cat "${srcdir}/config.x86_64" > ./.config

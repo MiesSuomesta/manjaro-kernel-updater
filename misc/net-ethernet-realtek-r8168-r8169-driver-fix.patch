@@ -35,39 +35,39 @@ but when load->remove->reload cycle is done, it is ok.
  3 files changed, 89 insertions(+), 11 deletions(-)
 
 diff --git a/drivers/net/ethernet/realtek/r8169_main.c b/drivers/net/ethernet/realtek/r8169_main.c
-index bf5bf05970a2..1ad5fb591621 100644
+index dad84ecf5a77..dd8a56d37da9 100644
 --- a/drivers/net/ethernet/realtek/r8169_main.c
 +++ b/drivers/net/ethernet/realtek/r8169_main.c
-@@ -5172,15 +5172,19 @@ static int r8169_mdio_register(struct rtl8169_private *tp)
+@@ -5107,14 +5107,19 @@ static int r8169_mdio_register(struct rtl8169_private *tp)
+ 	tp->phydev = mdiobus_get_phy(new_bus, 0);
  	if (!tp->phydev) {
- 		mdiobus_unregister(new_bus);
  		return -ENODEV;
 -	} else if (!tp->phydev->drv) {
 -		/* Most chip versions fail with the genphy driver.
 -		 * Therefore ensure that the dedicated PHY driver is loaded.
 -		 */
--		dev_err(&pdev->dev, "realtek.ko not loaded, maybe it needs to be added to initramfs?\n");
--		mdiobus_unregister(new_bus);
+-		dev_err(&pdev->dev, "no dedicated PHY driver found for PHY ID 0x%08x, maybe realtek.ko needs to be added to initramfs?\n",
+-			tp->phydev->phy_id);
 -		return -EUNATCH;
-+       } else {
-+               dev_info(&pdev->dev, "PHY version: 0x%x\n", tp->phydev->phy_id);
-+               dev_info(&pdev->dev, "MAC version: %d\n", tp->mac_version);
-+
-+               if (tp->mac_version == RTL_GIGA_MAC_NONE) {
-+                       /* Most chip versions fail with the genphy driver.
-+                        * Therefore ensure that the dedicated PHY driver is loaded.
-+                        */
-+                       dev_err(&pdev->dev, "Not known MAC/PHY version.\n");
-+                       mdiobus_unregister(new_bus);
-+                       return -EUNATCH;
-+               }
- 	}
--
+-	}
++        } else {
++                dev_info(&pdev->dev, "PHY version: 0x%x\n", tp->phydev->phy_id);
++                dev_info(&pdev->dev, "MAC version: %d\n", tp->mac_version);
++ 
++                if (tp->mac_version == RTL_GIGA_MAC_NONE) {
++                        /* Most chip versions fail with the genphy driver.
++                         * Therefore ensure that the dedicated PHY driver is loaded.
++                         */
++                        dev_err(&pdev->dev, "Not known MAC/PHY version.\n");
++                        mdiobus_unregister(new_bus);
++                        return -EUNATCH;
++                }
++        } 
+ 
  	/* PHY will be woken up in rtl_open() */
  	phy_suspend(tp->phydev);
- 
 diff --git a/drivers/net/phy/phy-core.c b/drivers/net/phy/phy-core.c
-index 66b8c61ca74c..809ad2f943d3 100644
+index 46bd68e9ecfa..eb903e81c3bb 100644
 --- a/drivers/net/phy/phy-core.c
 +++ b/drivers/net/phy/phy-core.c
 @@ -151,6 +151,18 @@ static const struct phy_setting settings[] = {
@@ -89,7 +89,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  /**
   * phy_lookup_setting - lookup a PHY setting
   * @speed: speed to match
-@@ -457,6 +469,9 @@ int phy_read_mmd(struct phy_device *phydev, int devad, u32 regnum)
+@@ -456,6 +468,9 @@ int phy_read_mmd(struct phy_device *phydev, int devad, u32 regnum)
  {
  	int ret;
  
@@ -99,7 +99,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	phy_lock_mdio_bus(phydev);
  	ret = __phy_read_mmd(phydev, devad, regnum);
  	phy_unlock_mdio_bus(phydev);
-@@ -479,6 +494,9 @@ int __phy_write_mmd(struct phy_device *phydev, int devad, u32 regnum, u16 val)
+@@ -478,6 +493,9 @@ int __phy_write_mmd(struct phy_device *phydev, int devad, u32 regnum, u16 val)
  {
  	int ret;
  
@@ -109,7 +109,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	if (regnum > (u16)~0 || devad > 32)
  		return -EINVAL;
  
-@@ -518,6 +536,9 @@ int phy_write_mmd(struct phy_device *phydev, int devad, u32 regnum, u16 val)
+@@ -515,6 +533,9 @@ int phy_write_mmd(struct phy_device *phydev, int devad, u32 regnum, u16 val)
  {
  	int ret;
  
@@ -119,7 +119,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	phy_lock_mdio_bus(phydev);
  	ret = __phy_write_mmd(phydev, devad, regnum, val);
  	phy_unlock_mdio_bus(phydev);
-@@ -543,6 +564,9 @@ int phy_modify_changed(struct phy_device *phydev, u32 regnum, u16 mask, u16 set)
+@@ -540,6 +561,9 @@ int phy_modify_changed(struct phy_device *phydev, u32 regnum, u16 mask, u16 set)
  {
  	int ret;
  
@@ -129,7 +129,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	phy_lock_mdio_bus(phydev);
  	ret = __phy_modify_changed(phydev, regnum, mask, set);
  	phy_unlock_mdio_bus(phydev);
-@@ -566,6 +590,9 @@ int __phy_modify(struct phy_device *phydev, u32 regnum, u16 mask, u16 set)
+@@ -563,6 +587,9 @@ int __phy_modify(struct phy_device *phydev, u32 regnum, u16 mask, u16 set)
  {
  	int ret;
  
@@ -139,7 +139,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	ret = __phy_modify_changed(phydev, regnum, mask, set);
  
  	return ret < 0 ? ret : 0;
-@@ -587,6 +614,9 @@ int phy_modify(struct phy_device *phydev, u32 regnum, u16 mask, u16 set)
+@@ -584,6 +611,9 @@ int phy_modify(struct phy_device *phydev, u32 regnum, u16 mask, u16 set)
  {
  	int ret;
  
@@ -149,7 +149,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	phy_lock_mdio_bus(phydev);
  	ret = __phy_modify(phydev, regnum, mask, set);
  	phy_unlock_mdio_bus(phydev);
-@@ -613,6 +643,9 @@ int __phy_modify_mmd_changed(struct phy_device *phydev, int devad, u32 regnum,
+@@ -610,6 +640,9 @@ int __phy_modify_mmd_changed(struct phy_device *phydev, int devad, u32 regnum,
  {
  	int new, ret;
  
@@ -159,7 +159,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	ret = __phy_read_mmd(phydev, devad, regnum);
  	if (ret < 0)
  		return ret;
-@@ -646,6 +679,9 @@ int phy_modify_mmd_changed(struct phy_device *phydev, int devad, u32 regnum,
+@@ -643,6 +676,9 @@ int phy_modify_mmd_changed(struct phy_device *phydev, int devad, u32 regnum,
  {
  	int ret;
  
@@ -169,7 +169,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	phy_lock_mdio_bus(phydev);
  	ret = __phy_modify_mmd_changed(phydev, devad, regnum, mask, set);
  	phy_unlock_mdio_bus(phydev);
-@@ -671,6 +707,9 @@ int __phy_modify_mmd(struct phy_device *phydev, int devad, u32 regnum,
+@@ -668,6 +704,9 @@ int __phy_modify_mmd(struct phy_device *phydev, int devad, u32 regnum,
  {
  	int ret;
  
@@ -179,7 +179,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	ret = __phy_modify_mmd_changed(phydev, devad, regnum, mask, set);
  
  	return ret < 0 ? ret : 0;
-@@ -694,6 +733,9 @@ int phy_modify_mmd(struct phy_device *phydev, int devad, u32 regnum,
+@@ -691,6 +730,9 @@ int phy_modify_mmd(struct phy_device *phydev, int devad, u32 regnum,
  {
  	int ret;
  
@@ -189,7 +189,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	phy_lock_mdio_bus(phydev);
  	ret = __phy_modify_mmd(phydev, devad, regnum, mask, set);
  	phy_unlock_mdio_bus(phydev);
-@@ -704,6 +746,10 @@ EXPORT_SYMBOL_GPL(phy_modify_mmd);
+@@ -701,6 +743,10 @@ EXPORT_SYMBOL_GPL(phy_modify_mmd);
  
  static int __phy_read_page(struct phy_device *phydev)
  {
@@ -200,7 +200,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	if (WARN_ONCE(!phydev->drv->read_page, "read_page callback not available, PHY driver not loaded?\n"))
  		return -EOPNOTSUPP;
  
-@@ -712,6 +758,10 @@ static int __phy_read_page(struct phy_device *phydev)
+@@ -709,6 +755,10 @@ static int __phy_read_page(struct phy_device *phydev)
  
  static int __phy_write_page(struct phy_device *phydev, int page)
  {
@@ -211,7 +211,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	if (WARN_ONCE(!phydev->drv->write_page, "write_page callback not available, PHY driver not loaded?\n"))
  		return -EOPNOTSUPP;
  
-@@ -728,6 +778,10 @@ static int __phy_write_page(struct phy_device *phydev, int page)
+@@ -725,6 +775,10 @@ static int __phy_write_page(struct phy_device *phydev, int page)
   */
  int phy_save_page(struct phy_device *phydev)
  {
@@ -222,7 +222,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	phy_lock_mdio_bus(phydev);
  	return __phy_read_page(phydev);
  }
-@@ -748,6 +802,9 @@ int phy_select_page(struct phy_device *phydev, int page)
+@@ -745,6 +799,9 @@ int phy_select_page(struct phy_device *phydev, int page)
  {
  	int ret, oldpage;
  
@@ -232,7 +232,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	oldpage = ret = phy_save_page(phydev);
  	if (ret < 0)
  		return ret;
-@@ -782,6 +839,9 @@ int phy_restore_page(struct phy_device *phydev, int oldpage, int ret)
+@@ -779,6 +836,9 @@ int phy_restore_page(struct phy_device *phydev, int oldpage, int ret)
  {
  	int r;
  
@@ -242,7 +242,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	if (oldpage >= 0) {
  		r = __phy_write_page(phydev, oldpage);
  
-@@ -813,6 +873,9 @@ int phy_read_paged(struct phy_device *phydev, int page, u32 regnum)
+@@ -810,6 +870,9 @@ int phy_read_paged(struct phy_device *phydev, int page, u32 regnum)
  {
  	int ret = 0, oldpage;
  
@@ -252,7 +252,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	oldpage = phy_select_page(phydev, page);
  	if (oldpage >= 0)
  		ret = __phy_read(phydev, regnum);
-@@ -834,6 +897,9 @@ int phy_write_paged(struct phy_device *phydev, int page, u32 regnum, u16 val)
+@@ -831,6 +894,9 @@ int phy_write_paged(struct phy_device *phydev, int page, u32 regnum, u16 val)
  {
  	int ret = 0, oldpage;
  
@@ -262,7 +262,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	oldpage = phy_select_page(phydev, page);
  	if (oldpage >= 0)
  		ret = __phy_write(phydev, regnum, val);
-@@ -857,6 +923,9 @@ int phy_modify_paged_changed(struct phy_device *phydev, int page, u32 regnum,
+@@ -854,6 +920,9 @@ int phy_modify_paged_changed(struct phy_device *phydev, int page, u32 regnum,
  {
  	int ret = 0, oldpage;
  
@@ -272,7 +272,7 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	oldpage = phy_select_page(phydev, page);
  	if (oldpage >= 0)
  		ret = __phy_modify_changed(phydev, regnum, mask, set);
-@@ -878,7 +947,12 @@ EXPORT_SYMBOL(phy_modify_paged_changed);
+@@ -875,7 +944,12 @@ EXPORT_SYMBOL(phy_modify_paged_changed);
  int phy_modify_paged(struct phy_device *phydev, int page, u32 regnum,
  		     u16 mask, u16 set)
  {
@@ -287,10 +287,10 @@ index 66b8c61ca74c..809ad2f943d3 100644
  	return ret < 0 ? ret : 0;
  }
 diff --git a/drivers/net/phy/phy_device.c b/drivers/net/phy/phy_device.c
-index ac2784192472..3aff74bfead0 100644
+index 04946de74fa0..b610ac7c22ad 100644
 --- a/drivers/net/phy/phy_device.c
 +++ b/drivers/net/phy/phy_device.c
-@@ -1352,8 +1352,6 @@ int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
+@@ -1350,8 +1350,6 @@ int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
  
  	phydev->interface = interface;
  
@@ -299,7 +299,7 @@ index ac2784192472..3aff74bfead0 100644
  	/* Initial carrier state is off as the phy is about to be
  	 * (re)initialized.
  	 */
-@@ -1371,6 +1369,8 @@ int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
+@@ -1369,6 +1367,8 @@ int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
  	phy_resume(phydev);
  	phy_led_triggers_register(phydev);
  
@@ -308,6 +308,3 @@ index ac2784192472..3aff74bfead0 100644
  	return err;
  
  error:
--- 
-2.27.0
-

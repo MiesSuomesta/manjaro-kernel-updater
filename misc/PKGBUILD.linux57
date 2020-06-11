@@ -70,7 +70,8 @@ source=("https://www.kernel.org/pub/linux/kernel/v5.x/linux-${_basekernel}.tar.x
         '0011-bootsplash.patch'
         '0012-bootsplash.patch'
         '0013-bootsplash.patch'
-        'net-ethernet-realtek-r8168-r8169-driver-fix.patch')
+        'net-ethernet-realtek-r8168-r8169-driver-fix.patch'
+        'dm-patch.patch')
 sha256sums=('de8163bb62f822d84f7a3983574ec460060bf013a78ff79cd7c979ff1ec1d7e0'
             '6d1f86937ae202b25e4a9c3b9cd87c7da520af7000b4f271ac379282afa9b8d5'
             'eb090be2d7cdf3ca985bdd055c405a5c67c68560e7ed79b3f4a67a0a63afee67'
@@ -119,7 +120,7 @@ sha256sums=('de8163bb62f822d84f7a3983574ec460060bf013a78ff79cd7c979ff1ec1d7e0'
             '035ea4b2a7621054f4560471f45336b981538a40172d8f17285910d4e0e0b3ef'
             '429820d8f8fbb3d5f43c0f880b362d87cbad5f5837aa9139d687594f6000b519')
 prepare() {
-  cd "${srcdir}/linux-${_basekernel}" || cd "${srcdir}/mainline-kernel-org" 
+  cd "${srcdir}/linux-${_basekernel}" || cd "${srcdir}/mainline" 
 
   # add upstream patch
   msg "add upstream patch"
@@ -247,6 +248,9 @@ prepare() {
   msg2 "net-ethernet-realtek-r8168-r8169-driver-fix"
   patch -Np1 -i "${srcdir}/net-ethernet-realtek-r8168-r8169-driver-fix.patch"
 
+  msg "Quickfixes: dm-patch.patch"
+  patch -Np1 -i "${srcdir}/dm-patch.patch"
+
   if [ "${CARCH}" = "x86_64" ]; then
     cat "${srcdir}/config.x86_64" > ./.config
   else
@@ -283,7 +287,7 @@ prepare() {
 }
 
 build() {
-  cd "${srcdir}/linux-${_basekernel}" || cd "${srcdir}/mainline-kernel-org" 
+  cd "${srcdir}/linux-${_basekernel}" || cd "${srcdir}/mainline" 
 
   msg "build"
   make ${MAKEFLAGS} LOCALVERSION= bzImage modules
@@ -295,7 +299,7 @@ package_linux57() {
   optdepends=('crda: to set the correct wireless channels of your country')
   provides=("linux=${pkgver}" VIRTUALBOX-GUEST-MODULES WIREGUARD-MODULE)
 
-  cd "${srcdir}/linux-${_basekernel}" || cd "${srcdir}/mainline-kernel-org" 
+  cd "${srcdir}/linux-${_basekernel}" || cd "${srcdir}/mainline" 
 
   KARCH=x86
 
@@ -342,7 +346,7 @@ package_linux57-headers() {
   pkgdesc="Header files and scripts for building modules for ${pkgbase/linux/Linux} kernel"
   provides=("linux-headers=$pkgver")
 
-  cd "${srcdir}/linux-${_basekernel}" || cd "${srcdir}/mainline-kernel-org" 
+  cd "${srcdir}/linux-${_basekernel}" || cd "${srcdir}/mainline" 
   local _builddir="${pkgdir}/usr/lib/modules/${_kernver}/build"
 
   install -Dt "${_builddir}" -m644 Makefile .config Module.symvers
