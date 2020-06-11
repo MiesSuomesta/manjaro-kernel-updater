@@ -14,7 +14,7 @@ shift
 sh update-sources.sh 
 
 (
-   cd linux57
+   cd $TARGET
    cp -v PKGBUILD.$TARGET PKGBUILD
 
    updpkgsums
