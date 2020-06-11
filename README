@@ -1,0 +1,5 @@
+
+The r816x driver fix is located at ./misc/ and once needed to install systemd stuff from systemd-network-refresh, installation
+script network-refresher-install.sh installs systemd files in place. Installation is needed to be done once.
+
+
