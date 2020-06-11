@@ -33,7 +33,16 @@ updgitsources() {
     echo "Updating manjaro linux57 kernel sources...."
     initgitrepos https://gitlab.manjaro.org/packages/core/linux57.git linux57
     err=$?
-    echo "Updated mainline kernel sources."
+    echo "Updated linux57 kernel sources."
+    exit $err
+)
+err=$?
+
+(
+    echo "Updating manjaro linux56 kernel sources...."
+    initgitrepos https://gitlab.manjaro.org/packages/core/linux56.git linux56
+    err=$?
+    echo "Updated linux56 kernel sources."
     exit $err
 )
 err=$?
