@@ -1,0 +1,16 @@
+#!/bin/sh
+(
+	cd /home/sillyme/github/manjaro-kernel-updater
+
+        git pull --autostash --rebase
+	if [ $? -ne 0 ]; then
+		echo "Pull error...."
+		exit 1
+	fi
+
+        sh update-sources.sh && (
+		sh compile-sources.sh mainline -s -C -f
+		sh compile-sources.sh linux57 -s -C -f
+	)
+)
+
