@@ -4,12 +4,16 @@ initgitrepos()
 {
   from="$1"
   to="$2"
-
+  MAINLINEKERNELPATH="$PWD"
+		
   if [ -d $to ]; then
 	(
 		
 		cd $to;
 		cp -v ../misc/* .
+
+		sed -i "s,MAINLINEKERNELPATH,${MAINLINEKERNELPATH},g" PKG*
+
 		updgitsources
 	)
   else

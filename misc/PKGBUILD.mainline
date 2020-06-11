@@ -19,7 +19,7 @@ url="http://www.kernel.org/"
 license=('GPL2')
 makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc' 'elfutils' 'git')
 options=('!strip')
-source=("git+file:///home/sillyme/kernel-updater/mainline-kernel-org"
+source=("git+file:///MAINLINEKERNELPATH/mainline-kernel-org"
         # the main kernel config files
         'config.x86_64' 'config' 'config.aufs'
         # AUFS Patches
