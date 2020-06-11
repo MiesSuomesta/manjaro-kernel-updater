@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cd /home/sillyme/github/manjaro-kernel-updater
+files=$(echo */linux*.tar.xz)
+sudo pacman -v --noconfirm -U $files
+
