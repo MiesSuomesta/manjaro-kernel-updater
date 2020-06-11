@@ -9,8 +9,8 @@
 	fi
 
         sh update-sources.sh && (
-		sh compile-sources.sh mainline -s -C -f
-		sh compile-sources.sh linux57 -s -C -f
+		sh compile-sources.sh cron mainline -s -C -f
+		sh compile-sources.sh cron linux57 -s -C -f
 	)
 )
 
